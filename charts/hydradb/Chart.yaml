@@ -15,6 +15,5 @@ keywords:
   - object-storage
   - graphblas
 annotations:
-  # Must match LICENSE. This read Apache-2.0 while the repository shipped
-  # AGPL-3.0, which Artifact Hub would have published as the chart's licence.
+  # Must match LICENSE.
   artifacthub.io/license: AGPL-3.0-only
