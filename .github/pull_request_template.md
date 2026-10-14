@@ -1,32 +1,25 @@
-<!-- Delete any section that does not apply. -->
+<!-- PRs need a linked issue a maintainer has /approved, or they are closed. See CONTRIBUTING.md. -->
 
-## What this changes and why
+## Summary
 
-<!-- The reasoning that is not visible in the diff: what was broken, what else
-you considered, why this. If it closes an issue, say "Fixes #123". -->
+## Linked issue
 
-## How it was verified
+Closes #
 
-<!-- What you actually ran, not what you intended to run. If you ran only part
-of `just ci` — it is a long run, 25m 41s clean — say which part. -->
+## AI Assistance
 
-- [ ] `just ci` passes locally (or `bash scripts/ci_local.sh`, which delegates to it)
-- [ ] New behaviour has a test that fails without the change
-- [ ] Ran `just smoke`, and `bash scripts/runtime_smoke.sh` if this touches the server runtime
+<!-- List any AI tools used to prepare this PR (model and reasoning effort), or write "None". Keep this section. -->
 
-## Compatibility
+| Model | Effort |
+|-------|--------|
+| GPT-6 Astra | High |
 
-<!-- These decide whether the change can land in a patch release. If you tick
-one, describe the upgrade path for an operator on the previous release. -->
+## Checklist
 
-- [ ] Changes the result of a query that works today
-- [ ] Changes the Bolt or HTTP wire format
-- [ ] Changes the on-disk or object-store layout, or needs a migration
-- [ ] Adds or renames configuration, environment variables, or chart values
-- [ ] Adds a third-party dependency
-- [ ] None of the above
+- [ ] Implements an issue a maintainer has `/approved`.
+- [ ] Small and scoped to that issue.
+- [ ] Breaking changes described below, or none.
 
-## Notes for the reviewer
+### Breaking changes
 
-<!-- Where to start, what you are unsure about, what you left out of scope.
-Follow-up work belongs in an issue, linked from here. -->
+None.
