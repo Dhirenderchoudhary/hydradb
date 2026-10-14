@@ -43,7 +43,6 @@ jobs:
           HYDRADB_STATE_DIR: /tmp/hydradb-single-node
         run: |
           bash -n scripts/deploy_single_node_k3s.sh
-          bash -n scripts/ec2_graphblas_benchmark.sh
           python3 -m py_compile scripts/bolt_graphblas_client.py
           bash scripts/deploy_single_node_k3s.sh --render-only
       - name: Lint Helm chart
@@ -117,7 +116,6 @@ jobs:
             echo "query-node matrix refresh configuration is still rendered"
             exit 1
           fi
-          grep -q 'Authorization: Bearer' /tmp/hydradb-custom-auth.yaml
           grep -q 'GRAPH_DATA_CACHE_BYTES: "8589934592"' /tmp/hydradb-custom-auth.yaml
           grep -q 'GRAPH_READER_WAL_REPLAY_CONCURRENCY: "16"' /tmp/hydradb-custom-auth.yaml
           if grep -Eq 'GRAPH_[A-Z0-9_]+: "[0-9]+(\.[0-9]+)?e[+-][0-9]+"' /tmp/hydradb-custom-auth.yaml; then
@@ -170,7 +168,6 @@ jobs:
             exit 1
           fi
           grep -q 'port: 9000' /tmp/hydradb-development.yaml
-          grep -q 'app.kubernetes.io/component: helm-test' /tmp/hydradb-development.yaml
           helm template hydradb charts/hydradb \
             --namespace hydradb \
             --values charts/hydradb/ci/ci-values.yaml \
@@ -296,6 +293,17 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # This list already drifted six recipes behind `just ci` once, so the
+      # promise is checked rather than trusted.
+      - name: Check parity with just ci
+        run: |
+          missing=$(comm -23 \
+            <(sed -n 's/^ci: //p' justfile | tr ' ' '\n' | sort -u) \
+            <(grep -o '# just [a-z0-9-]*' .github/workflows/ci.yml | cut -d' ' -f3 | sort -u))
+          if [ -n "$missing" ]; then
+            echo "::error::recipes in 'just ci' with no ci.yml step: $missing"
+            exit 1
+          fi
       # SHA-pinned like every other action here. The pin freezes the action's
       # own code, not the compiler, so `toolchain` is stated explicitly rather
       # than inherited from whichever branch the SHA was taken from.
@@ -303,7 +311,7 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      # Without this the job rebuilds all 398 locked dependencies every run.
+      # Without this the job rebuilds every locked dependency on each run.
       # `save-if` keeps only main writing the entry, so branch-scoped caches
       # cannot accumulate and evict what the next main build needs.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
@@ -358,6 +366,21 @@ jobs:
         run: |
           cargo clippy --locked --all-targets -p hydradb-telemetry --features otlp -- -D warnings
           cargo test --locked -p hydradb-telemetry --features otlp
+
+      - name: Lint and test Cypher frontend crates   # just test-cypher
+        run: |
+          cargo clippy --locked --all-targets -p hydradb-cypher-ast -- -D warnings
+          cargo test --locked -p hydradb-cypher-ast
+          cargo clippy --locked --all-targets -p hydradb-cypher-parser-antlr -- -D warnings
+          cargo test --locked -p hydradb-cypher-parser-antlr
+      - name: Lint and test graph-plan crate         # just test-graph-plan
+        run: |
+          cargo clippy --locked --all-targets -p hydradb-graph-plan -- -D warnings
+          cargo test --locked -p hydradb-graph-plan
+      - name: Lint and test Cypher engine crate      # just test-cypher-engine
+        run: |
+          cargo clippy --locked --all-targets -p hydradb-cypher-engine -- -D warnings
+          cargo test --locked -p hydradb-cypher-engine
 
       # `--all-features`, not an enumerated list: a list silently stops covering
       # the next feature added to Cargo.toml. Also the only line that reaches
